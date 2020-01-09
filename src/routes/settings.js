@@ -11,12 +11,12 @@ module.exports = db => {
       , [request.session.user_id]).then(({ rows: settings }) => {
       response.json(settings);
     })
-    .catch(error => console.log(error));
+      .catch(error => console.log(error));
   });
   
   router.post("/settings", (request, response) => {
     const { address1, address2, city, province, country, auth_code, is_patient} = request.body.settings;
-    const address = `${address1}, ${address2}, ${city}, ${province}, ${country}`
+    const address = `${address1}, ${address2}, ${city}, ${province}, ${country}`;
     db.query(
       `
       INSERT INTO patient_settings (patient_id, address, auth_code, is_patient) VALUES ($1::text, $2::text, $3::boolean)

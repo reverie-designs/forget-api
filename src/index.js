@@ -1,6 +1,6 @@
 const PORT = process.env.PORT || 8001;
 const ENV = require("./environment");
-const app = require("./application")(ENV, { updateAppointment });
+const app = require("./application")(ENV, { updateNotification });
 const server = require("http").Server(app);
 const WebSocket = require("ws");
 const wss = new WebSocket.Server({ server });
@@ -12,12 +12,12 @@ wss.on("connection", socket => {
     }
   };
 });
-function updateAppointment(id, interview) {
+function updateNotification(id, interview) {
   wss.clients.forEach(function eachClient(client) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(
         JSON.stringify({
-          type: "SET_INTERVIEW",
+          type: "SET_NOTIFICATION",
           id,
           interview
         })

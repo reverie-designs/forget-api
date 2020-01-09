@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "nodemon index.js",
+    "reset": "psql -U development -d forget_development < ./src/db/schema/create.sql && psql -U development -d forget_development < ./src/db/schema/development.sql"
+    },
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -19,11 +21,3 @@
   }
 }
 
-// "bcrypt": "^3.0.7",
-//     "cookie-session": "^1.3.3",
-//"nodemon": "^2.0.2",
-
-// "scripts": {
-//   "start": "nodemon index.js",
-//   "start:dev": "nodemon index.js",
-// },
