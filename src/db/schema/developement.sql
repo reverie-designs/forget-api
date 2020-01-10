@@ -24,5 +24,6 @@ INSERT INTO families (auth_code)
 
 INSERT INTO family_members (user_id, family_id, is_patient)
  values
- (2, 1, false);
+ (1, 1, false),
+ (2, 1, true);
 

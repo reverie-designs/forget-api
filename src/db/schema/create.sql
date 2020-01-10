@@ -56,7 +56,6 @@ CREATE TABLE family_members (
   is_patient BOOLEAN DEFAULT FALSE
 );
 
-
 /*
 CREATE TABLE game (
   id SERIAL PRIMARY KEY NOT NULL,

@@ -10,10 +10,14 @@ const app = express();
 
 const db = require("./db");
 
-const locations = require("./routes/locations");
+const locations = require("./routes/location");
 const notifications = require("./routes/notifications");
 const settings = require("./routes/settings");
-const users = require("./routes/users");
+const users = require("./routes/user");
+
+
+// module.exports = {locations, users, settings, notifications};
+
 
 function read(file) {
   return new Promise((resolve, reject) => {
@@ -30,23 +34,19 @@ function read(file) {
   });
 }
 
-module.exports = function application(
-  ENV,
-  actions = { updateNotification: () => {} }
-) {
+module.exports = function application () {
   app.use(cors());
   app.use(helmet());
   app.use(bodyparser.json());
 
   app.use("/api", locations(db));
-  app.use("/api", notifications(db, actions.updateNotification));
+  app.use("/api", notifications(db));
   app.use("/api", settings(db));
   app.use("/api", users(db));
 
-  if (ENV === "development" || ENV === "test") {
-    Promise.all([
+      Promise.all([
       read(path.resolve(__dirname, `db/schema/create.sql`)),
-      read(path.resolve(__dirname, `db/schema/${ENV}.sql`))
+      read(path.resolve(__dirname, `db/schema/developement.sql`))
     ])
       .then(([create, seed]) => {
         app.get("/api/debug/reset", (request, response) => {
@@ -60,8 +60,8 @@ module.exports = function application(
       })
       .catch(error => {
         console.log(`Error setting up the reset route: ${error}`);
-      });
-  }
+    });
+
 
   app.close = function() {
     return db.end();

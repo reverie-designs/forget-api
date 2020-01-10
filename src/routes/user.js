@@ -1,20 +1,23 @@
 const router = require("express").Router();
 
 module.exports = db => {
-  router.get("/login", (request, response) => {
+  router.get("/user", (request, response) => {
+    // const {name, password} = request.body.user;
     db.query(
       `
       SELECT users.id as userId, users.name as name, users.password as password, users.avatar_url as avatar_url, family_members.is_patient as is_patient
       FROM users Join family_members ON users.id=family_members.user_id
       WHERE users.name = $1 AND users.password = $2;
     `
-      , [users.name,users.password]).then(({ rows: user }) => {
-      response.json(user);
-    })
-    .catch(error => console.log(error));
+      // , [name, password])
+      , ['bob', 'bob1'])
+      .then(({ rows: user }) => {
+        response.json(user);
+      })
+      .catch(error => console.log(error));
   });
   
-  router.post("/signup", (request, response) => {
+  router.post("/user", (request, response) => {
     const {name, password, avatar_url} = request.body.user;
     db.query(
       `
