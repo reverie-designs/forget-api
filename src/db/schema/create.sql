@@ -1,0 +1,86 @@
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS patient_settings CASCADE;
+DROP TABLE IF EXISTS current_locations CASCADE;
+DROP TABLE IF EXISTS families CASCADE;
+DROP TABLE IF EXISTS family_members CASCADE;
+
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  avatar_url VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY NOT NULL,
+  daily_repeat BOOLEAN DEFAULT FALSE,
+  time VARCHAR(255) NOT NULL,
+  text VARCHAR(255) NOT NULL,
+  pills BOOLEAN,
+  appointments BOOLEAN,
+  food BOOLEAN,
+  family_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  date VARCHAR(255) NOT NULL,
+  completed BOOLEAN DEFAULT FALSE,
+  audio_filepath VARCHAR(255)
+);
+
+CREATE TABLE patient_settings (
+  id SERIAL PRIMARY KEY NOT NULL,
+  patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  patient_address VARCHAR(255) NOT NULL,
+  patient_lat DECIMAL NOT NULL,
+  patient_lng DECIMAL NOT NULL,
+  radius DECIMAL,
+  radius_on BOOLEAN
+);
+
+CREATE TABLE current_locations (
+  id SERIAL PRIMARY KEY NOT NULL,
+  patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  longitude DECIMAL,
+  latitude DECIMAL
+);
+
+CREATE TABLE families (
+  id SERIAL PRIMARY KEY NOT NULL,
+  auth_code VARCHAR(255) DEFAULT NULL
+);
+
+CREATE TABLE family_members (
+  id SERIAL PRIMARY KEY NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  family_id INTEGER REFERENCES families(id) ON DELETE CASCADE,
+  is_patient BOOLEAN DEFAULT FALSE
+);
+
+/*
+CREATE TABLE game (
+  id SERIAL PRIMARY KEY NOT NULL,
+  patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  start_time TIMESTAMP,
+  end_time TIMESTAMP
+);
+
+CREATE TABLE patient_directions (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name VARCHAR (255),
+  address VARCHAR (255),
+  patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_photos (
+  id SERIAL PRIMARY KEY NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  image_id INTEGER REFERENCES user_photos(id) ON DELETE CASCADE,
+  image_URL VARCHAR (255)
+);
+
+CREATE TABLE relations (
+  id SERIAL PRIMARY KEY NOT NULL,
+  image_id INTEGER REFERENCES user_photos(id) ON DELETE CASCADE,
+  relation_name VARCHAR (255) NOT NULL,
+);
+*/

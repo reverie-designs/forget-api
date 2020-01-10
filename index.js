@@ -1,6 +1,6 @@
 const PORT = process.env.PORT || 8001;
-const ENV = require("./environment");
-const app = require("./application")(ENV);
+const ENV = require("./src/environment");
+const app = require("./src/application")(ENV);
 const server = require("http").Server(app);
 // const WebSocket = require("ws");
 // const wss = new WebSocket.Server({ server });
