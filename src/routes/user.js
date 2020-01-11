@@ -2,7 +2,8 @@ const router = require("express").Router();
 
 module.exports = db => {
   router.get("/user", (request, response) => {
-    // const {name, password} = request.body.user;
+    const {name, password} = request.body.user;
+    console.log(request.query);
     db.query(
       `
       SELECT users.id as user_id, users.name as name, users.password as password, users.avatar_url as avatar_url, family_members.is_patient as is_patient, family_members.patient_id as patient_id
@@ -10,8 +11,8 @@ module.exports = db => {
       WHERE users.name = $1 AND users.password = $2
       LIMIT 1;
     `
-      // , [request.query.name, request.query.password])
-      , ['bob', 'bob1'])
+      , [request.query.name, request.query.password])
+      // , ['bob', 'bob1'])
       .then(({ rows: user }) => {
         response.json(user);
       })
@@ -19,7 +20,7 @@ module.exports = db => {
   });
   
   router.post("/user", (request, response) => {
-    const {username, password, avatar_url} = request.body.user;
+    const {username, password, avatar_url} = request.query;
     db.query(
       `
       INSERT INTO users (name, password, avatar_url) VALUES ($1::text, $2::text, $3::text)
