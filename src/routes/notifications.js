@@ -2,7 +2,7 @@ const router = require("express").Router();
 
 // for the all notifications calender view
 module.exports = (db) => {
-  router.get("notifications/", (request, response) => {
+  router.get("/notifications", (request, response) => {
     db.query(
       `
       SELECT
@@ -10,16 +10,16 @@ module.exports = (db) => {
         notifications.date as date,
         notifications.time as time,
         notifications.pills as pills,
-        notifications.appointment as appointment,
+        notifications.appointments as appointment,
         notifications.food as food,
-        family_members.is_patient as patient,
-        users.avatar_url as userUrl
+      family_members.is_patient as patient,
+      users.avatar_url as userUrl
       FROM family_members
       JOIN users ON users.id = family_members.user_id
-      JOIN notifications ON family_members.family_id = notifications.family_id
-      WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = $1::integer AND is_patient = true;) 
-      GROUP BY notifications.id
-      ORDER BY notifications.start_date
+      JOIN notifications ON family_members.user_id = notifications.family_id
+      WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = $1::text AND family_members.is_patient = true) 
+      GROUP BY notifications.id, family_members.is_patient, users.avatar_url
+      ORDER BY to_date(notifications.date, 'Mon DD YYYY'), to_timestamp(notifications.time,'HH24:MI:SS');
     `,
       ['V|R|FAMILY'])
       // [request.session.auth_code])
@@ -28,27 +28,27 @@ module.exports = (db) => {
       });
   });
 
-  router.get("notifications/day", (request, response) => {
+  router.get("/notifications/day", (request, response) => {
 
     db.query(
       `
       SELECT
         notifications.id,
-        notifications.daily_repeat,
         notifications.date as date,
         notifications.time as time,
         notifications.pills as pills,
-        notifications.appointment as appointment,
+        notifications.appointments as appointment,
         notifications.food as food,
-        notifications. as ,
+        family_members.is_patient as patient,
+        users.avatar_url as userUrl
       FROM family_members
       JOIN users ON users.id = family_members.user_id
-      JOIN notifications ON family_members.family_id = notifications.family_id
-      WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = $1::text AND is_patient = true;) 
+      JOIN notifications ON family_members.user_id = notifications.family_id
+      WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = $1::text AND family_members.is_patient = true) 
       AND notifications.date = TO_CHAR($2::DATE, 'Mon dd yyyy')
-      GROUP BY notifications.id
-      ORDER BY notifications.start_date
-      LIMIT 30
+      GROUP BY notifications.id, family_members.is_patient, users.avatar_url
+      ORDER BY to_date(notifications.date, 'Mon DD YYYY')
+      LIMIT 30;
     `,
       ['V|R|FAMILY', 'Jan 17 2020'])
       // [request.session.auth_code, request.params.day])
@@ -58,7 +58,7 @@ module.exports = (db) => {
   });
 
 
-  router.post("notifications/", (request, response) => {
+  router.post("/notifications", (request, response) => {
     // if (process.env.TEST_ERROR) {
     //   setTimeout(() => response.status(500).json({}), 1000);
     //   return;
@@ -68,12 +68,12 @@ module.exports = (db) => {
   
     db.query(
       `
-      INSERT INTO notifications (daily_repeat, time, pills, appointment, food, text, family_id, date) 
+      INSERT INTO notifications (daily_repeat, time, pills, appointments, food, text, family_id, date) 
         VALUES 
-        ($1::boolean, $2::integer, $3::boolean, $4::boolean, $5::boolean, $6::integer, $7::integer, $8::integer)
+        ($1::boolean, $2::integer, $3::boolean, $4::boolean, $5::boolean, $6::text, $7::integer, $8::text)
         RETURNING *
     `,
-      [daily, time, pills, appointment, food, info, Number(request.sessions.user_id), date.trim().slice(4,15)]
+      [daily, time.trim(), pills, appointment, food, info, Number(request.sessions.user_id), date.trim().slice(4,15)]
     )
       .then(() => {
         response.status(204).json({});
@@ -102,19 +102,40 @@ module.exports = (db) => {
 
 // SELECT
 // notifications.id,
-// categories.name as title,
 // notifications.date as date,
-// notifications.date as time,
+// notifications.time as time,
 // notifications.pills as pills,
-// notifications.appointment as appointment,
+// notifications.appointments as appointment,
 // notifications.food as food,
 // family_members.is_patient as patient,
 // users.avatar_url as userUrl
 // FROM family_members
 // JOIN users ON users.id = family_members.user_id
-// JOIN notifications ON family_members.family_id = notifications.family_id
-// WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = 'V|R|FAMILY' AND family_members.is_patient = true) 
+// JOIN notifications ON family_members.user_id = notifications.family_id
+// WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = 'V|R|FAMILY' AND family_members.is_patient = true)
 // AND notifications.date = TO_CHAR('Jan 17 2020'::DATE, 'Mon dd yyyy')
-// GROUP BY notifications.id
-// ORDER BY notifications.start_date
-// LIMIT 30
+// GROUP BY notifications.id, family_members.is_patient, users.avatar_url
+// ORDER BY notifications.date
+// LIMIT 30;
+
+// SELECT
+// notifications.id,
+// notifications.date as date,
+// notifications.time as time,
+// notifications.pills as pills,
+// notifications.appointments as appointment,
+// notifications.food as food,
+// family_members.is_patient as patient,
+// users.avatar_url as userUrl
+// FROM family_members
+// JOIN users ON users.id = family_members.user_id
+// JOIN notifications ON family_members.user_id = notifications.family_id
+// WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = 'V|R|FAMILY' AND family_members.is_patient = true) 
+// GROUP BY notifications.id, family_members.is_patient, users.avatar_url
+// ORDER BY notifications.date, notifications.time;
+
+// INSERT INTO notifications (daily_repeat, time, pills, appointments, food, text, family_id, date) 
+// VALUES
+// (false, '15:00:00',  false, true, true, 'see doctor', 1, 'Jan 7 2020'),
+// (true, '13:00:00',  false, true, true, 'see doctor', 1, 'Jan 7 2020')
+// RETURNING *;
