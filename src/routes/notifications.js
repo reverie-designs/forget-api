@@ -22,7 +22,7 @@ module.exports = (db) => {
       ORDER BY to_date(notifications.date, 'Mon DD YYYY'), to_timestamp(notifications.time,'HH24:MI:SS');
     `,
       ['V|R|FAMILY'])
-      // [request.session.auth_code])
+      // [request.query.auth_code])
       .then(({ rows: notifications }) => {
         response.json(notifications);
       });
@@ -51,7 +51,7 @@ module.exports = (db) => {
       LIMIT 30;
     `,
       ['V|R|FAMILY', 'Jan 17 2020'])
-      // [request.session.auth_code, request.params.day])
+      // [request.query.auth_code, request.query.day])
       .then(({ rows: notifications }) => {
         response.json(notifications);
       });

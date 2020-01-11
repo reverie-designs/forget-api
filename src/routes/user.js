@@ -10,7 +10,7 @@ module.exports = db => {
       WHERE users.name = $1 AND users.password = $2
       LIMIT 1;
     `
-      // , [name, password])
+      // , [request.query.name, request.query.password])
       , ['bob', 'bob1'])
       .then(({ rows: user }) => {
         response.json(user);

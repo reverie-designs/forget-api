@@ -12,7 +12,7 @@ module.exports = db => {
       LIMIT 5;
     `
       // , ['V|R|FAMILY'])
-      , [request.session.auth_code])
+      , [request.query.auth_code])
       .then(({ rows: settings }) => {
         response.json(settings);
       })

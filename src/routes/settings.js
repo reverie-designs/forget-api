@@ -30,7 +30,7 @@ module.exports = db => {
       WHERE users.id = (select family_members.patient_id FROM users JOIN family_members ON users.id = family_members.users_id WHERE family_members.user_id = $1);
     `
       ,[2])
-      // , [Number(request.session.user_id)])
+      // , [Number(request.query.user_id)])
       .then(({ rows: settings }) => {
         response.json(settings);
       })
