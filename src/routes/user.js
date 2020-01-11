@@ -5,9 +5,10 @@ module.exports = db => {
     // const {name, password} = request.body.user;
     db.query(
       `
-      SELECT users.id as userId, users.name as name, users.password as password, users.avatar_url as avatar_url, family_members.is_patient as is_patient
-      FROM users Join family_members ON users.id=family_members.user_id
-      WHERE users.name = $1 AND users.password = $2;
+      SELECT users.id as user_id, users.name as name, users.password as password, users.avatar_url as avatar_url, family_members.is_patient as is_patient, family_members.patient_id as patient_id
+      FROM users JOIN family_members ON users.id=family_members.user_id
+      WHERE users.name = $1 AND users.password = $2
+      LIMIT 1;
     `
       // , [name, password])
       , ['bob', 'bob1'])
@@ -18,15 +19,19 @@ module.exports = db => {
   });
   
   router.post("/user", (request, response) => {
-    const {name, password, avatar_url} = request.body.user;
+    const {username, password, avatar_url} = request.body.user;
     db.query(
       `
       INSERT INTO users (name, password, avatar_url) VALUES ($1::text, $2::text, $3::text)
+      ON CONFLICT (avatar_url) DO
+      UPDATE SET avatar_url = $3::text
       RETURNING *;
     `
-      ,[name, password, avatar_url]).then(({ rows: user }) => {
-      response.json(user);
-    })
+      ,[username, password, avatar_url])
+      // ,['bobs', 'bobb3', 'https://image.flaticon.com/icons/png/512/194/194938.png'])
+      .then(({ rows: user }) => {
+        response.json(user);
+      })
       .catch(error => console.log(error));
   });
 

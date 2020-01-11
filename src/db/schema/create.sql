@@ -2,15 +2,15 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS patient_settings CASCADE;
 DROP TABLE IF EXISTS current_locations CASCADE;
-DROP TABLE IF EXISTS families CASCADE;
 DROP TABLE IF EXISTS family_members CASCADE;
+DROP TABLE IF EXISTS geofence CASCADE;
 
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY NOT NULL,
   name VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL,
-  avatar_url VARCHAR(255) NOT NULL
+  avatar_url VARCHAR(255)
 );
 
 CREATE TABLE notifications (
@@ -30,31 +30,33 @@ CREATE TABLE notifications (
 CREATE TABLE patient_settings (
   id SERIAL PRIMARY KEY NOT NULL,
   patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  patient_address VARCHAR(255) NOT NULL,
-  patient_lat DECIMAL NOT NULL,
-  patient_lng DECIMAL NOT NULL,
-  radius DECIMAL,
-  radius_on BOOLEAN
+  patient_home VARCHAR(255) NOT NULL,
+  lat DECIMAL NOT NULL,
+  lng DECIMAL NOT NULL
 );
 
 CREATE TABLE current_locations (
   id SERIAL PRIMARY KEY NOT NULL,
   patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  longitude DECIMAL,
-  latitude DECIMAL
-);
-
-CREATE TABLE families (
-  id SERIAL PRIMARY KEY NOT NULL,
-  auth_code VARCHAR(255) DEFAULT NULL
+  lat DECIMAL,
+  lng DECIMAL,
+  Date VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE family_members (
   id SERIAL PRIMARY KEY NOT NULL,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  family_id INTEGER REFERENCES families(id) ON DELETE CASCADE,
-  is_patient BOOLEAN DEFAULT FALSE
+  patient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  is_patient BOOLEAN DEFAULT FALSE,
+  auth_code VARCHAR(255) DEFAULT NULL
 );
+
+CREATE TABLE geofence (
+  id SERIAL PRIMARY KEY NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  radius DECIMAL,
+  radius_on BOOLEAN
+)
 
 /*
 CREATE TABLE game (
