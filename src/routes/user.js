@@ -2,33 +2,47 @@ const router = require("express").Router();
 
 module.exports = db => {
   router.get("/user", (request, response) => {
-    const {name, password} = request.body.user;
-    console.log(request.query);
+    // console.log("THIS IS REQUEST",request.query);
+    const {name, password} = request.query;
+    // console.log("This is Query",request.query);
+    // console.log("This is Body", request.body);
     db.query(
-      `
-      SELECT users.id as user_id, users.name as name, users.password as password, users.avatar_url as avatar_url, family_members.is_patient as is_patient, family_members.patient_id as patient_id
+    //   `
+    //   SELECT users.id as user_id, users.name as name, users.password as password
+    //   FROM users 
+    //   WHERE users.name = $1 AND users.password = $2
+    //   LIMIT 1;
+    // `
+    `SELECT users.id as user_id, users.name as name, users.password as password, users.avatar_url as avatar_url, family_members.is_patient as is_patient, family_members.patient_id as patient_id,
+     family_members.auth_code as auth_code
       FROM users JOIN family_members ON users.id=family_members.user_id
       WHERE users.name = $1 AND users.password = $2
-      LIMIT 1;
-    `
-      , [request.query.name, request.query.password])
+      LIMIT 1;`
+      , [name, password])
       // , ['bob', 'bob1'])
-      .then(({ rows: user }) => {
+      // console.log("Thisisresponse", response)
+      .then(({rows:user}) => {
+        // console.log(user);
+        // console.log("query",request.query);
+        // console.log("BIG OBJECT",object);
+        // console.log(rows);
+        // console.log(object);
         response.json(user);
+        // console.log(response.json(user));
+
       })
       .catch(error => console.log(error));
   });
   
   router.post("/user", (request, response) => {
-    const {username, password, avatar_url} = request.query;
+    const {name, password} = request.body.user;
+    // console.log("THIs IS BODY",request.body);
     db.query(
       `
-      INSERT INTO users (name, password, avatar_url) VALUES ($1::text, $2::text, $3::text)
-      ON CONFLICT (avatar_url) DO
-      UPDATE SET avatar_url = $3::text
+      INSERT INTO users (name, password) VALUES ($1::text, $2::text)
       RETURNING *;
     `
-      ,[username, password, avatar_url])
+      ,[name, password])
       // ,['bobs', 'bobb3', 'https://image.flaticon.com/icons/png/512/194/194938.png'])
       .then(({ rows: user }) => {
         response.json(user);

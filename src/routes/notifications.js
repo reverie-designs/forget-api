@@ -3,6 +3,8 @@ const router = require("express").Router();
 // for the all notifications calender view
 module.exports = (db) => {
   router.get("/notifications", (request, response) => {
+    // const {auth_code} = 
+    // console.log("waiting for auth code",request.query);
     db.query(
       `
       SELECT
@@ -12,6 +14,7 @@ module.exports = (db) => {
         notifications.pills as pills,
         notifications.appointments as appointment,
         notifications.food as food,
+        notifications.text as info,
       family_members.is_patient as patient,
       users.avatar_url as userUrl
       FROM family_members
@@ -21,15 +24,16 @@ module.exports = (db) => {
       GROUP BY notifications.id, family_members.is_patient, users.avatar_url
       ORDER BY to_date(notifications.date, 'Mon DD YYYY'), to_timestamp(notifications.time,'HH24:MI:SS');
     `,
-      ['V|R|FAMILY'])
-      // [request.query.auth_code])
+      // ['V|R|FAMILY'])
+      [request.query.auth_code])
       .then(({ rows: notifications }) => {
+        // console.log(notifications);
         response.json(notifications);
       });
   });
 
   router.get("/notifications/day", (request, response) => {
-
+    // console.log("asking for day notifications",request.query);
     db.query(
       `
       SELECT
@@ -39,6 +43,7 @@ module.exports = (db) => {
         notifications.pills as pills,
         notifications.appointments as appointment,
         notifications.food as food,
+        notifications.text as info,
         family_members.is_patient as patient,
         users.avatar_url as userUrl
       FROM family_members
@@ -50,8 +55,8 @@ module.exports = (db) => {
       ORDER BY to_date(notifications.date, 'Mon DD YYYY')
       LIMIT 30;
     `,
-      ['V|R|FAMILY', 'Jan 17 2020'])
-      // [request.query.auth_code, request.query.day])
+      // ['V|R|FAMILY', 'Jan 17 2020'])
+      [request.query.auth_code, request.query.day])
       .then(({ rows: notifications }) => {
         response.json(notifications);
       });
@@ -64,16 +69,16 @@ module.exports = (db) => {
     //   return;
     // }
 
-    const { date, time, pills, appointment, food, info, daily } = request.body.notification;
+    const { date, time, pills, appointment, food, info, daily, user_id } = request.body.notification;
   
     db.query(
       `
       INSERT INTO notifications (daily_repeat, time, pills, appointments, food, text, family_id, date) 
         VALUES 
-        ($1::boolean, $2::integer, $3::boolean, $4::boolean, $5::boolean, $6::text, $7::integer, $8::text)
-        RETURNING *
+        ($1::boolean, $2::text, $3::boolean, $4::boolean, $5::boolean, $6::text, $7::integer, $8::text)
+        RETURNING *;
     `,
-      [daily, time.trim(), pills, appointment, food, info, Number(request.sessions.user_id), date.trim().slice(4,15)]
+      [daily, time.trim(), pills, appointment, food, info, Number(user_id), date.trim()]
     )
       .then(() => {
         response.status(204).json({});

@@ -2,6 +2,7 @@ const router = require("express").Router();
 
 module.exports = db => {
   router.get("/locations", (request, response) => {
+    console.log("LOCATION",request.query);
     db.query(
       `
       SELECT current_locations.patient_id as patient_id, current_locations.lat as lat, current_locations.lng as lng, current_locations.date as date
@@ -20,13 +21,14 @@ module.exports = db => {
   });
   
   router.post("/locations", (request, response) => {
-    const {latitude, longitude} = request.body.user;
+    console.log("Locations post", request.body)
+    const {latitude, longitude, user_id} = request.body.params;
     db.query(
       `
-      INSERT INTO current_locations (patient_id, lat, lng, date) VALUES ($1::integer, $2::decimal, $3::decimal, NOW()::DATE)
+      INSERT INTO current_locations (patient_id, lat, lng, date) VALUES ($1::integer, $2::decimal, $3::decimal, to_char(now()::date, 'Mon DD YYYY'))
       RETURNING *;
     `
-      ,[Number(request.session.user_id), latitude, longitude])
+      ,[Number(user_id), latitude, longitude])
       .then(({ rows: user }) => {
         response.json(user);
       })

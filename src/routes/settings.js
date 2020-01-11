@@ -21,44 +21,72 @@ const getLatLng = function(key, address) {
 
 module.exports = db => {
   router.get("/settings", (request, response) => {
+    console.log("got to settings", request.query);
     db.query(
       `
-      SELECT patient_settings.patient_id as patient_Id, patient_settings.patient_home as address, users.name as patient_name, family_members.is_patient as is_patient
-      FROM users 
-      JOIN family_members ON users.id=family_members.user_id
-      JOIN patient_settings ON patient_settings.patient_id = users.id
-      WHERE users.id = (select family_members.patient_id FROM users JOIN family_members ON users.id = family_members.users_id WHERE family_members.user_id = $1);
+      SELECT patient_settings.patient_id, patient_settings.patient_home as address, patient_settings.lat, patient_settings.lng, family_members.is_patient as is_patient
+      FROM family_members
+      JOIN patient_settings ON family_members.patient_id = patient_settings.patient_id
+      WHERE family_members.user_id = $1
+      Group by patient_settings.id, family_members.is_patient
+      order by patient_settings.id desc
+      limit 1;
     `
-      ,[2])
-      // , [Number(request.query.user_id)])
+      // ,[2])
+      , [Number(request.query.user_id)])
       .then(({ rows: settings }) => {
+        console.log("sending settings");
         response.json(settings);
       })
       .catch(error => console.log(error));
   });
   
+  router.get("/settings/geofence", (request, response) => {
+    console.log("recieving radius settings")
+    db.query(
+      `
+      SELECT family_members.patient_id as patient_Id, geofence.radius as radius, geofence.radius_on as radius_on
+      FROM family_members
+      JOIN geofence ON geofence.user_id = family_members.patient_id
+      WHERE family_members.user_id = $1
+      ORDER BY geofence.id DESC 
+      LIMIT 1;
+    `
+      , [Number(request.query.user_id)])
+      .then(({ rows: geofence }) => {
+        console.log("radius - settings - being sent", geofence);
+        response.json(geofence);
+      })
+      .catch(error => console.log(error));
+  });
+
+
   router.post("/settings", (request, response) => {
     // const { address1, address2, city, province, country, auth_code, is_patient} = request.body.settings;
-    const { address1, address2, city, province, country} = request.body.settings;
+    console.log('settings', request.body.params);
+    const { user_id, address1, address2, city, province, country, auth_code} = request.body.params;
     const address = `${address1}, ${address2 === "" ? '' : address2 + ", " }${city}, ${province}, ${country}`;
+    console.log("This is conc address",address);
     // patient_settings have unique patient_id
 
     getLatLng(key, address).then((obj) => {
-      const lat = obj.data[0].lat;
-      const lng = obj.data[0].lng;
+      // console.log("coord response", obj[0].lat);
+      const lat = Number(obj[0].lat);
+      const lng = Number(obj[0].lon);
+      console.log("new coordinates", user_id,lat, lng, address, auth_code);
       return db.query(
         `
-        INSERT INTO patient_settings (patient_id, patient_home, is_patient, lat, lng)
-        (SELECT patient_id as user_id, $2::text as patient_home, $3::boolean as is_patient, $4::decimal as lat, $5::decimal as lng
-          FROM family_members WHERE auth_code = $6::auth_code AND user_id = $1
-          LIMIT 1)
-        ON CONFLICT (patient_id) DO
-        UPDATE SET patient_home = $2::text, lat = $4, lng = $5
-        RETURNING *;
+        INSERT INTO patient_settings (patient_id, patient_home, lat, lng)
+        (SELECT patient_id as patient_id, $2 as patient_home, $3 as lat, $4 as lng
+          FROM family_members WHERE auth_code = $5 AND user_id = $1
+          LIMIT 1);
       `
-        ,[Number(request.session.user_id), address, is_patient, lat, lng, request.session.auth_code]);
-    }).then(({ rows: user }) => {
-      response.json(user);
+        ,[Number(user_id), address, lat, lng, auth_code]);
+    }).then(() => {
+      // console.log(user);
+      console.log("query complete");
+      response.status(204).json({});
+      // response.json(user);
       return true;
     })
       .catch(error => response.status('500').send(JSON.stringify(error)));
@@ -66,19 +94,21 @@ module.exports = db => {
 
   router.post("/settings/geofence", (request, response) => {
     // const { address1, address2, city, province, country, auth_code, is_patient} = request.body.settings;
-    const {radius, radius_on} = request.body.settings;
+    const {radius, radius_on, user_id} = request.body.params;
     // patient_settings have unique patient_id
     db.query(
       `
       INSERT INTO geofence (user_id, radius, radius_on) 
-      (SELECT patient_id as user_id, $2::integer as radius, $3::boolean as radius_on
-      FROM family_members WHERE user_id = $1::text
+      (SELECT patient_id as user_id, $2 as radius, $3::boolean as radius_on
+      FROM family_members WHERE user_id = $1
       LIMIT 1)
       
       RETURNING *;
     `
-      ,[Number(request.session.user_id), radius, radius_on])
+      ,[Number(user_id), radius, radius_on])
       .then(({ rows: user }) => {
+        console.log("set Radius complete");
+        console.log(user);
         response.json(user);
       })
       .catch(error => console.log(error));
