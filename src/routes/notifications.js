@@ -6,59 +6,61 @@ module.exports = (db) => {
     // const {auth_code} = 
     // console.log("waiting for auth code",request.query);
     db.query(
-      `
-      SELECT
-        notifications.id,
-        notifications.date as date,
-        notifications.time as time,
-        notifications.pills as pills,
-        notifications.appointments as appointment,
-        notifications.food as food,
-        notifications.text as info,
-      family_members.is_patient as patient,
-      users.avatar_url as userUrl
-      FROM family_members
-      JOIN users ON users.id = family_members.user_id
-      JOIN notifications ON family_members.user_id = notifications.family_id
-      WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = $1::text AND family_members.is_patient = true) 
-      GROUP BY notifications.id, family_members.is_patient, users.avatar_url
-      ORDER BY to_date(notifications.date, 'Mon DD YYYY'), to_timestamp(notifications.time,'HH24:MI:SS');
-    `,
+      `SELECT
+      notifications.id,
+      notifications.date as date,
+      notifications.time as time,
+      notifications.pills as pills,
+      notifications.appointments as appointment,
+      notifications.food as food,
+      notifications.text as info,
+    family_members.is_patient as patient
+    FROM family_members
+    JOIN users ON users.id = family_members.user_id
+    JOIN notifications ON family_members.user_id = notifications.family_id
+    WHERE family_members.patient_id = (SELECT family_members.patient_id as user_id FROM family_members WHERE auth_code = $1::text LIMIT 1)
+    GROUP BY notifications.id, family_members.is_patient
+    ORDER BY to_date(notifications.date, 'Mon DD YYYY'), to_timestamp(notifications.time,'HH24:MI:SS');
+  `,
       // ['V|R|FAMILY'])
       [request.query.auth_code])
       .then(({ rows: notifications }) => {
         // console.log(notifications);
+        // console.log("sending notifications", notifications);
+
         response.json(notifications);
       });
   });
 
   router.get("/notifications/day", (request, response) => {
-    // console.log("asking for day notifications",request.query);
+    console.log("asking for day notifications",request.query);
     db.query(
       `
       SELECT
-        notifications.id,
-        notifications.date as date,
-        notifications.time as time,
-        notifications.pills as pills,
-        notifications.appointments as appointment,
-        notifications.food as food,
-        notifications.text as info,
-        family_members.is_patient as patient,
-        users.avatar_url as userUrl
-      FROM family_members
-      JOIN users ON users.id = family_members.user_id
-      JOIN notifications ON family_members.user_id = notifications.family_id
-      WHERE users.id = (SELECT family_members.user_id as user_id FROM family_members WHERE auth_code = $1::text AND family_members.is_patient = true) 
-      AND notifications.date = TO_CHAR($2::DATE, 'Mon dd yyyy')
-      GROUP BY notifications.id, family_members.is_patient, users.avatar_url
-      ORDER BY to_date(notifications.date, 'Mon DD YYYY')
-      LIMIT 30;
+      notifications.id,
+      notifications.date as date,
+      notifications.time as time,
+      notifications.pills as pills,
+      notifications.appointments as appointment,
+      notifications.food as food,
+      notifications.text as info,
+      family_members.is_patient as patient,
+      completed
+    FROM family_members
+    JOIN users ON users.id = family_members.user_id
+    JOIN notifications ON family_members.user_id = notifications.family_id
+    WHERE family_members.patient_id = (SELECT family_members.patient_id as user_id FROM family_members WHERE auth_code = $1::text limit 1)
+    AND notifications.date = TO_CHAR($2::DATE, 'Mon dd yyyy')
+    GROUP BY notifications.id, family_members.is_patient
+    ORDER BY to_date(notifications.date, 'Mon DD YYYY')
+    LIMIT 30;
     `,
       // ['V|R|FAMILY', 'Jan 17 2020'])
       [request.query.auth_code, request.query.day])
-      .then(({ rows: notifications }) => {
-        response.json(notifications);
+      .then((res) => {
+        console.log("sending notifications day", res.rows);
+        // console.log("sending notifications day", rows.Result);
+        response.json(res.rows);
       });
   });
 
@@ -68,7 +70,7 @@ module.exports = (db) => {
     //   setTimeout(() => response.status(500).json({}), 1000);
     //   return;
     // }
-
+    console.log("ADDING NOTIFICATION",request.body)
     const { date, time, pills, appointment, food, info, daily, user_id } = request.body.notification;
   
     db.query(
