@@ -64,8 +64,8 @@ module.exports = db => {
   router.post("/settings", (request, response) => {
     // const { address1, address2, city, province, country, auth_code, is_patient} = request.body.settings;
     console.log('settings', request.body.params);
-    const { user_id, address1, address2, city, province, country, auth_code} = request.body.params;
-    const address = `${address1}, ${address2 === "" ? '' : address2 + ", " }${city}, ${province}, ${country}`;
+    const { user_id, addressOne, addressTwo, city, province, country, auth_code} = request.body.params;
+    const address = `${addressOne}, ${addressTwo === "" ? '' : address2 + ", " }${city}, ${province}, ${country}`;
     console.log("This is conc address",address);
     // patient_settings have unique patient_id
 
@@ -94,6 +94,7 @@ module.exports = db => {
 
   router.post("/settings/geofence", (request, response) => {
     // const { address1, address2, city, province, country, auth_code, is_patient} = request.body.settings;
+    console.log("TURNING RADIUS OFF",request.body.params);
     const {radius, radius_on, user_id} = request.body.params;
     // patient_settings have unique patient_id
     db.query(

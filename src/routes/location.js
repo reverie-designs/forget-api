@@ -2,7 +2,7 @@ const router = require("express").Router();
 
 module.exports = db => {
   router.get("/locations", (request, response) => {
-    console.log("LOCATION",request.query);
+    // console.log("LOCATION",request.query);
     db.query(
       `
       SELECT current_locations.patient_id as patient_id, current_locations.lat as lat, current_locations.lng as lng, current_locations.date as date
@@ -21,7 +21,7 @@ module.exports = db => {
   });
   
   router.post("/locations", (request, response) => {
-    console.log("Locations post", request.body)
+    console.log("Locations post", request.body.params)
     const {latitude, longitude, user_id} = request.body.params;
     db.query(
       `
